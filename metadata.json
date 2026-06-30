@@ -1,0 +1,6 @@
+{
+  "name": "SILA VCF",
+  "description": "A professional and modern platform to collect contacts, automatically prefix them, track statistics, and generate vCard (VCF) contact batch downloads with an automated threshold system and a highly functional admin panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
