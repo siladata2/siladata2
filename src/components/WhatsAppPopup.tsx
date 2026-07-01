@@ -59,7 +59,7 @@ export default function WhatsAppPopup({
               {title}
             </h3>
             <p className="text-sm text-neutral-400 max-w-xs mx-auto">
-              Stay connected with SILA VCF updates, fresh contacts list batches, and premium features!
+              Stay connected with SILA VCF updates and fresh contacts list batches!
             </p>
           </div>
 

@@ -133,5 +133,13 @@ export const ApiService = {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to reset counter');
+  },
+
+  async clearFailedSubmissions(): Promise<void> {
+    const res = await fetch('/api/admin/failed-submissions', {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to clear failed submissions');
   }
 };
