@@ -42,24 +42,10 @@ export interface DashboardStats {
   onlineVisitors: number;
   downloadHistory: VcfBatch[];
   recentContacts: Contact[];
-  failedSubmissions?: FailedSubmission[];
-  totalFailedSubmissions?: number;
   threshold: number;
   currentCounter: number;
   whatsappGroupUrl: string;
   whatsappChannelUrl: string;
-}
-
-export interface FailedSubmission {
-  _id?: string;
-  name: string;
-  phone: string;
-  ip: string;
-  country: string;
-  browser: string;
-  device: string;
-  reason: string;
-  createdAt: Date | string;
 }
 
 export interface SubmissionStats {

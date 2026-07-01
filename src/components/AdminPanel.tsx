@@ -17,7 +17,7 @@ export default function AdminPanel() {
   const [pin, setPin] = useState('');
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics' | 'contacts' | 'settings' | 'failed'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'analytics' | 'contacts' | 'settings'>('dashboard');
 
   // Stats State
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -196,23 +196,6 @@ export default function AdminPanel() {
     }
   };
 
-  const handleClearFailedSubmissions = async () => {
-    if (!window.confirm("Are you sure you want to clear all failed submission records? This cannot be undone.")) {
-      return;
-    }
-    setActionLoading(true);
-    try {
-      await ApiService.clearFailedSubmissions();
-      const dashboardStats = await ApiService.getDashboard();
-      setStats(dashboardStats);
-      alert('All failed submission records have been cleared successfully.');
-    } catch (err: any) {
-      alert(err.message || 'Failed to clear failed submission records.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   // Exporters
   const handleExportCSV = () => {
     try {
@@ -326,12 +309,6 @@ export default function AdminPanel() {
               Contacts Directory
             </button>
             <button
-              onClick={() => setActiveTab('failed')}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${activeTab === 'failed' ? 'bg-neutral-800 text-white shadow' : 'text-neutral-400 hover:text-neutral-100'}`}
-            >
-              Failed Submissions
-            </button>
-            <button
               onClick={() => setActiveTab('settings')}
               className={`px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all cursor-pointer ${activeTab === 'settings' ? 'bg-neutral-800 text-white shadow' : 'text-neutral-400 hover:text-neutral-100'}`}
             >
@@ -369,12 +346,6 @@ export default function AdminPanel() {
             className={`flex-1 text-center py-2.5 text-[11px] font-bold tracking-wider uppercase border-b-2 ${activeTab === 'contacts' ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5' : 'border-transparent text-neutral-400'}`}
           >
             Contacts
-          </button>
-          <button
-            onClick={() => setActiveTab('failed')}
-            className={`flex-1 text-center py-2.5 text-[11px] font-bold tracking-wider uppercase border-b-2 ${activeTab === 'failed' ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5' : 'border-transparent text-neutral-400'}`}
-          >
-            Failed
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -973,82 +944,6 @@ export default function AdminPanel() {
                     Save Configuration Settings
                   </button>
                 </form>
-              </div>
-            )}
-
-            {/* TAB CONTENT: 5. Failed Submissions */}
-            {activeTab === 'failed' && (
-              <div className="bg-neutral-900 border border-neutral-800 rounded-3xl p-6 sm:p-8">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                  <div>
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-red-500 animate-pulse" />
-                      Namba Zilizo Shindwa Kusubmited (Failed Submissions)
-                    </h3>
-                    <p className="text-xs text-neutral-400 mt-1">
-                      Katalogi ya namba za simu na majina yaliyoshindwa kupita masharti ya usajili (Duplicate, Invalid format, n.k.)
-                    </p>
-                  </div>
-                  {stats?.failedSubmissions && stats.failedSubmissions.length > 0 && (
-                    <button
-                      onClick={handleClearFailedSubmissions}
-                      disabled={actionLoading}
-                      className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/30 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Futa Rekodi Zote
-                    </button>
-                  )}
-                </div>
-
-                <div className="overflow-x-auto border border-neutral-850 rounded-2xl bg-neutral-950/40">
-                  <table className="w-full text-left text-xs text-neutral-300">
-                    <thead className="bg-neutral-950 text-neutral-400 uppercase text-[10px] tracking-wider border-b border-neutral-850">
-                      <tr>
-                        <th className="py-3 px-4">S/N</th>
-                        <th className="py-3 px-4">Jina (Name)</th>
-                        <th className="py-3 px-4">Namba ya Simu</th>
-                        <th className="py-3 px-4">Sababu ya Kufeli (Reason)</th>
-                        <th className="py-3 px-4">Nchi / IP</th>
-                        <th className="py-3 px-4">Kifaa / Vivinjari</th>
-                        <th className="py-3 px-4 text-right">Muda</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-neutral-850">
-                      {!stats?.failedSubmissions || stats.failedSubmissions.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="py-12 text-center text-neutral-500 font-medium text-xs">
-                            Hakuna namba yoyote iliyoshindwa kusubmited kufikia sasa! 🎉
-                          </td>
-                        </tr>
-                      ) : (
-                        stats.failedSubmissions.map((record, index) => (
-                          <tr key={record._id || index} className="hover:bg-neutral-900/50 transition-colors">
-                            <td className="py-3.5 px-4 text-neutral-500 font-mono">{index + 1}</td>
-                            <td className="py-3.5 px-4 font-semibold text-white">{record.name}</td>
-                            <td className="py-3.5 px-4 font-mono text-emerald-400">{record.phone}</td>
-                            <td className="py-3.5 px-4">
-                              <span className="px-2 py-1 rounded bg-red-500/10 border border-red-500/10 text-red-400 text-[10px] font-medium inline-block">
-                                {record.reason}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <div className="font-semibold text-neutral-200">{record.country}</div>
-                              <div className="text-[10px] text-neutral-500 font-mono mt-0.5">{record.ip}</div>
-                            </td>
-                            <td className="py-3.5 px-4">
-                              <div className="text-neutral-300">{record.device}</div>
-                              <div className="text-[10px] text-neutral-500 mt-0.5">{record.browser}</div>
-                            </td>
-                            <td className="py-3.5 px-4 text-right text-neutral-400 font-mono">
-                              {new Date(record.createdAt).toLocaleString()}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
               </div>
             )}
           </div>

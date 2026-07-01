@@ -18,25 +18,6 @@ export default function PublicLanding() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [popupTitle, setPopupTitle] = useState("Join Our Community");
 
-  // Logo tap count state for hidden admin portal (7 taps)
-  const [logoTapCount, setLogoTapCount] = useState(0);
-  const [lastTapTime, setLastTapTime] = useState(0);
-
-  const handleLogoTap = () => {
-    const now = Date.now();
-    if (now - lastTapTime > 3000) {
-      setLogoTapCount(1);
-    } else {
-      const nextCount = logoTapCount + 1;
-      setLogoTapCount(nextCount);
-      if (nextCount >= 7) {
-        setLogoTapCount(0);
-        window.history.pushState({}, '', '/admin');
-      }
-    }
-    setLastTapTime(now);
-  };
-
   // Load public configurations on mount
   useEffect(() => {
     // Track site visit in MongoDB
@@ -161,11 +142,7 @@ export default function PublicLanding() {
       {/* Header */}
       <header className={`border-b sticky top-0 z-40 transition-colors duration-300 backdrop-blur-md ${isDarkMode ? 'border-blue-950 bg-black/85' : 'border-slate-200 bg-white/80'}`}>
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div 
-            onClick={handleLogoTap}
-            className="flex items-center gap-3 cursor-pointer select-none active:scale-95 transition-transform"
-            title="SILA VCF"
-          >
+          <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/20">
               S
             </div>

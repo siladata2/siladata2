@@ -54,23 +54,11 @@ const SettingsSchema = new mongoose.Schema({
   currentCounter: { type: Number, default: 0 }
 });
 
-const FailedSubmissionSchema = new mongoose.Schema({
-  name: { type: String, default: '' },
-  phone: { type: String, default: '' },
-  ip: { type: String, default: 'Unknown' },
-  country: { type: String, default: 'Unknown' },
-  browser: { type: String, default: 'Unknown' },
-  device: { type: String, default: 'Unknown' },
-  reason: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
 // Models
 export const ContactModel = (mongoose.models.Contact || mongoose.model('Contact', ContactSchema)) as any;
 export const VisitModel = (mongoose.models.Visit || mongoose.model('Visit', VisitSchema)) as any;
 export const BatchModel = (mongoose.models.Batch || mongoose.model('Batch', BatchSchema)) as any;
 export const SettingsModel = (mongoose.models.Settings || mongoose.model('Settings', SettingsSchema)) as any;
-export const FailedSubmissionModel = (mongoose.models.FailedSubmission || mongoose.model('FailedSubmission', FailedSubmissionSchema)) as any;
 
 // Initial settings helper
 async function initializeSettings() {

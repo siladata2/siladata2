@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { connectDB, ContactModel, VisitModel, BatchModel, SettingsModel, FailedSubmissionModel } from './src/db.js';
+import { connectDB, ContactModel, VisitModel, BatchModel, SettingsModel } from './src/db.js';
 
 // Setup app
 const app = express();
@@ -158,49 +158,12 @@ app.post('/api/contacts', rateLimiter, async (req, res) => {
     await connectDB();
     const { name, phone } = req.body;
 
-    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'Unknown';
-    const country = getCountry(req);
-    const { browser, device } = parseUserAgent(req.headers['user-agent']);
-
     // Server-side validation
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      await FailedSubmissionModel.create({
-        name: name || 'N/A',
-        phone: phone || 'N/A',
-        ip,
-        country,
-        browser,
-        device,
-        reason: 'Missing or empty Name'
-      });
       return res.status(400).json({ error: 'Full Name is required.' });
     }
     if (!phone || typeof phone !== 'string' || phone.trim().length < 8) {
-      await FailedSubmissionModel.create({
-        name: name || 'N/A',
-        phone: phone || 'N/A',
-        ip,
-        country,
-        browser,
-        device,
-        reason: 'Phone number too short or invalid'
-      });
       return res.status(400).json({ error: 'A valid Phone Number with at least 8 digits is required.' });
-    }
-
-    // Check duplicate phone
-    const duplicate = await ContactModel.findOne({ phone: phone.trim() });
-    if (duplicate) {
-      await FailedSubmissionModel.create({
-        name: name || 'N/A',
-        phone: phone || 'N/A',
-        ip,
-        country,
-        browser,
-        device,
-        reason: 'Duplicate phone number'
-      });
-      return res.status(400).json({ error: 'Phone number is already registered!' });
     }
 
     // Sanitize and prefix with SILA
@@ -213,6 +176,11 @@ app.post('/api/contacts', rateLimiter, async (req, res) => {
         upperName = 'SILA ' + upperName;
       }
     }
+
+    // Capture visitor headers
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'Unknown';
+    const country = getCountry(req);
+    const { browser, device } = parseUserAgent(req.headers['user-agent']);
 
     // Save contact
     const contact = await ContactModel.create({
@@ -280,25 +248,8 @@ app.post('/api/contacts', rateLimiter, async (req, res) => {
       threshold: settings.downloadThreshold
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error saving contact:', error);
-    try {
-      const { name, phone } = req.body;
-      const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'Unknown';
-      const country = getCountry(req);
-      const { browser, device } = parseUserAgent(req.headers['user-agent']);
-      await FailedSubmissionModel.create({
-        name: name || 'N/A',
-        phone: phone || 'N/A',
-        ip,
-        country,
-        browser,
-        device,
-        reason: error.message || 'Database error during save'
-      });
-    } catch (err) {
-      console.error('Failed to log submission error:', err);
-    }
     res.status(500).json({ error: 'Failed to submit contact.' });
   }
 });
@@ -374,10 +325,6 @@ app.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
     // Recent contacts
     const recentContacts = await ContactModel.find().sort({ createdAt: -1 }).limit(10);
 
-    // Failed submissions
-    const failedSubmissions = await FailedSubmissionModel.find().sort({ createdAt: -1 }).limit(100);
-    const totalFailedSubmissions = await FailedSubmissionModel.countDocuments();
-
     // Current settings
     const settings = await SettingsModel.findOne();
 
@@ -388,8 +335,6 @@ app.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
       onlineVisitors,
       downloadHistory,
       recentContacts,
-      failedSubmissions,
-      totalFailedSubmissions,
       threshold: settings?.downloadThreshold || 100,
       currentCounter: settings?.currentCounter || 0,
       whatsappGroupUrl: settings?.whatsappGroupUrl || '',
@@ -398,17 +343,6 @@ app.get('/api/admin/dashboard', requireAdmin, async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch dashboard statistics.' });
-  }
-});
-
-// Clear failed submissions
-app.delete('/api/admin/failed-submissions', requireAdmin, async (req, res) => {
-  try {
-    await connectDB();
-    await FailedSubmissionModel.deleteMany({});
-    res.json({ success: true, message: 'All failed submissions cleared.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to clear records.' });
   }
 });
 
