@@ -13,11 +13,22 @@ export default function PublicLanding() {
   const [stats, setStats] = useState({ currentCounter: 0, downloadThreshold: 100 });
   const [whatsapp, setWhatsapp] = useState({ groupUrl: '', channelUrl: '' });
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [logoClicks, setLogoClicks] = useState(0);
+  const [logoTapCount, setLogoTapCount] = useState(0);
   
   // Popups control
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [popupTitle, setPopupTitle] = useState("Join Our Community");
+
+  const handleLogoTap = () => {
+    setLogoTapCount((prev) => {
+      const next = prev + 1;
+      if (next >= 7) {
+        window.history.pushState(null, '', '/admin');
+        return 0;
+      }
+      return next;
+    });
+  };
 
   // Load public configurations on mount
   useEffect(() => {
@@ -59,22 +70,10 @@ export default function PublicLanding() {
     }
   };
 
-  const handleLogoClick = () => {
-    setLogoClicks((prev) => {
-      const next = prev + 1;
-      if (next >= 7) {
-        window.history.pushState({}, '', '/admin');
-        return 0;
-      }
-      return next;
-    });
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    const sanitizedVal = val.replace(/\+/g, '');
-    if (/^[0-9\s()]*$/.test(sanitizedVal)) {
-      setPhone(sanitizedVal);
+    if (/^[0-9+\s()]*$/.test(val)) {
+      setPhone(val);
     }
   };
 
@@ -87,7 +86,7 @@ export default function PublicLanding() {
       setError('Please enter your Full Name.');
       return;
     }
-    const cleanPhone = phone.replace(/\+/g, '').replace(/\s+/g, '');
+    const cleanPhone = phone.replace(/\s+/g, '');
     if (cleanPhone.length < 8) {
       setError('Please enter a valid Phone Number (minimum 8 digits).');
       return;
@@ -97,7 +96,7 @@ export default function PublicLanding() {
 
     try {
       // API call to save contact to MongoDB
-      const response = await ApiService.submitContact(name, cleanPhone);
+      const response = await ApiService.submitContact(name, phone);
       
       if (response.success) {
         setSuccess(true);
@@ -156,9 +155,9 @@ export default function PublicLanding() {
       <header className={`border-b sticky top-0 z-40 transition-colors duration-300 backdrop-blur-md ${isDarkMode ? 'border-blue-950 bg-black/85' : 'border-slate-200 bg-white/80'}`}>
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div 
-            onClick={handleLogoClick}
-            className="flex items-center gap-3 cursor-pointer select-none active:scale-95 transition-transform"
-            title="SILA VCF logo"
+            onClick={handleLogoTap}
+            className="flex items-center gap-3 cursor-pointer select-none"
+            title="SILA VCF"
           >
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/20">
               S
@@ -293,7 +292,7 @@ export default function PublicLanding() {
                     <input
                       type="tel"
                       required
-                      placeholder="e.g. 255 712 345 678"
+                      placeholder="e.g. 255712345678"
                       value={phone}
                       onChange={handlePhoneChange}
                       className={`w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all ${isDarkMode ? 'bg-black border-blue-900/35 text-white placeholder:text-slate-650' : 'bg-slate-50 border-slate-200 text-slate-950 placeholder:text-slate-400'}`}

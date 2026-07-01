@@ -5,7 +5,7 @@ import { connectDB, ContactModel, VisitModel, BatchModel, SettingsModel } from '
 
 // Setup app
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 // Body parser middleware
 app.use(express.json());
@@ -652,34 +652,27 @@ app.get('/api/admin/export/json', requireAdmin, async (req, res) => {
 });
 
 
-// Trigger DB connection immediately on startup
-connectDB();
+// Vite Dev / Static Production asset handler setup
+async function startServer() {
+  await connectDB();
 
-if (process.env.NODE_ENV !== 'production') {
-  createViteServer({
-    server: { middlewareMode: true },
-    appType: 'spa',
-  }).then((vite) => {
-    app.use(vite.middlewares);
-    
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+  if (process.env.NODE_ENV !== 'production') {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
     });
-  });
-} else {
-  // Production routes (Heroku, Render, Vercel)
-  const distPath = path.join(process.cwd(), 'dist');
-  app.use(express.static(distPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-
-  // Skip listening in Vercel serverless functions
-  if (!process.env.VERCEL) {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`Production server running on port ${PORT}`);
+    app.use(vite.middlewares);
+  } else {
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
 }
 
-export default app;
+startServer();
