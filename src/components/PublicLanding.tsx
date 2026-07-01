@@ -86,8 +86,18 @@ export default function PublicLanding() {
       setError('Please enter your Full Name.');
       return;
     }
-    const cleanPhone = phone.replace(/\s+/g, '');
-    if (cleanPhone.length < 8) {
+    
+    // Format phone: remove spaces, +, and change starting 254 or 0 to 255.
+    let formattedPhone = phone.replace(/[\s()+-]+/g, '');
+    if (formattedPhone.startsWith('254')) {
+      formattedPhone = '255' + formattedPhone.substring(3);
+    } else if (formattedPhone.startsWith('0')) {
+      formattedPhone = '255' + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith('255') && formattedPhone.length === 9 && (formattedPhone.startsWith('7') || formattedPhone.startsWith('6') || formattedPhone.startsWith('8') || formattedPhone.startsWith('1') || formattedPhone.startsWith('9'))) {
+      formattedPhone = '255' + formattedPhone;
+    }
+
+    if (formattedPhone.length < 8) {
       setError('Please enter a valid Phone Number (minimum 8 digits).');
       return;
     }
@@ -96,7 +106,7 @@ export default function PublicLanding() {
 
     try {
       // API call to save contact to MongoDB
-      const response = await ApiService.submitContact(name, phone);
+      const response = await ApiService.submitContact(name, formattedPhone);
       
       if (response.success) {
         setSuccess(true);

@@ -181,10 +181,24 @@ app.post('/api/contacts', rateLimiter, async (req, res) => {
     const country = getCountry(req);
     const { browser, device } = parseUserAgent(req.headers['user-agent']);
 
+    // Format phone: remove spaces, +, and change starting 254 or 0 to 255.
+    let formattedPhone = phone.replace(/[\s()+-]+/g, '');
+    if (formattedPhone.startsWith('254')) {
+      formattedPhone = '255' + formattedPhone.substring(3);
+    } else if (formattedPhone.startsWith('0')) {
+      formattedPhone = '255' + formattedPhone.substring(1);
+    } else if (!formattedPhone.startsWith('255') && formattedPhone.length === 9 && (formattedPhone.startsWith('7') || formattedPhone.startsWith('6') || formattedPhone.startsWith('8') || formattedPhone.startsWith('1') || formattedPhone.startsWith('9'))) {
+      formattedPhone = '255' + formattedPhone;
+    }
+
+    if (formattedPhone.length < 8) {
+      return res.status(400).json({ error: 'A valid Phone Number with at least 8 digits is required.' });
+    }
+
     // Save contact
     const contact = await ContactModel.create({
       name: upperName,
-      phone: phone.trim(),
+      phone: formattedPhone,
       ip,
       country,
       browser,
