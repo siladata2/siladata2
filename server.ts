@@ -5,7 +5,7 @@ import { connectDB, ContactModel, VisitModel, BatchModel, SettingsModel } from '
 
 // Setup app
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 // Body parser middleware
 app.use(express.json());

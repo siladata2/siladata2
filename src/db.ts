@@ -12,6 +12,27 @@ export async function connectDB() {
   try {
     await mongoose.connect(MONGODB_URI);
     console.log('Successfully connected to MongoDB.');
+
+    // Programmatically drop orphaned/obsolete unique indexes on contacts collection if they exist
+    try {
+      const db = mongoose.connection.db;
+      if (db) {
+        const collections = await db.listCollections({ name: 'contacts' }).toArray();
+        if (collections.length > 0) {
+          const contactsCollection = db.collection('contacts');
+          const indexes = await contactsCollection.indexes();
+          const hasJidIndex = indexes.some(idx => idx.name === 'jid_1');
+          if (hasJidIndex) {
+            console.log('Found duplicate unique key index "jid_1" on contacts. Attempting to drop it...');
+            await contactsCollection.dropIndex('jid_1');
+            console.log('Successfully dropped "jid_1" index.');
+          }
+        }
+      }
+    } catch (indexError) {
+      console.warn('Could not check or drop index on contacts collection:', indexError);
+    }
+
     // Initialize settings if they do not exist
     await initializeSettings();
   } catch (error) {
