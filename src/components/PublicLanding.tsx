@@ -72,8 +72,9 @@ export default function PublicLanding() {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    if (/^[0-9+\s()]*$/.test(val)) {
-      setPhone(val);
+    const sanitizedVal = val.replace(/\+/g, '');
+    if (/^[0-9\s()]*$/.test(sanitizedVal)) {
+      setPhone(sanitizedVal);
     }
   };
 
@@ -86,7 +87,7 @@ export default function PublicLanding() {
       setError('Please enter your Full Name.');
       return;
     }
-    const cleanPhone = phone.replace(/\s+/g, '');
+    const cleanPhone = phone.replace(/\+/g, '').replace(/\s+/g, '');
     if (cleanPhone.length < 8) {
       setError('Please enter a valid Phone Number (minimum 8 digits).');
       return;
@@ -96,7 +97,7 @@ export default function PublicLanding() {
 
     try {
       // API call to save contact to MongoDB
-      const response = await ApiService.submitContact(name, phone);
+      const response = await ApiService.submitContact(name, cleanPhone);
       
       if (response.success) {
         setSuccess(true);

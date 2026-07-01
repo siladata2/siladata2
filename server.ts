@@ -652,27 +652,34 @@ app.get('/api/admin/export/json', requireAdmin, async (req, res) => {
 });
 
 
-// Vite Dev / Static Production asset handler setup
-async function startServer() {
-  await connectDB();
+// Trigger DB connection immediately on startup
+connectDB();
 
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
+if (process.env.NODE_ENV !== 'production') {
+  createViteServer({
+    server: { middlewareMode: true },
+    appType: 'spa',
+  }).then((vite) => {
     app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  });
+} else {
+  // Production routes (Heroku, Render, Vercel)
+  const distPath = path.join(process.cwd(), 'dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+
+  // Skip listening in Vercel serverless functions
+  if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Production server running on port ${PORT}`);
     });
   }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
 }
 
-startServer();
+export default app;
